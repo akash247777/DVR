@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>DVR Status Dashboard</title>
+    <script>
+      window.tailwind = window.tailwind || {};
+      window.tailwind.config = { 
+        darkMode: 'class',
+        theme: {
+          extend: {}
+        }
+      };
+    </script>
+    <script>
+      // Completely disable system preference detection
+      if (window.matchMedia) {
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        // Override the media query to always return false
+        Object.defineProperty(mediaQuery, 'matches', {
+          get: function() { return false; }
+        });
+      }
+    </script>
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('theme') || 'dark';
+          
+          // Remove all existing theme classes
+          document.body.classList.remove('theme-light', 'theme-dark');
+          document.documentElement.classList.remove('dark');
+          
+          // Apply the saved theme
+          if (saved === 'dark') {
+            document.body.classList.add('theme-dark');
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.colorScheme = 'dark';
+          } else {
+            document.body.classList.add('theme-light');
+            document.documentElement.style.colorScheme = 'light';
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Force override system preference detection */
+      @media (prefers-color-scheme: dark) {
+        /* This will be ignored due to our JavaScript override */
+      }
+      
+      /* Custom theme classes that don't depend on system preference */
+      .theme-light {
+        background-color: #ffffff !important;
+        color: #111827 !important;
+      }
+      
+      .theme-dark {
+        background-color: #000000 !important;
+        color: #ffffff !important;
+      }
+      
+      .theme-light .card {
+        background-color: #f3f4f6 !important;
+        border-color: #d1d5db !important;
+        color: #374151 !important;
+      }
+      
+      .theme-dark .card {
+        background-color: #000000 !important;
+        border-color: transparent !important;
+        color: #d1d5db !important;
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.3), 0 0 40px rgba(255, 255, 255, 0.2), 0 0 60px rgba(255, 255, 255, 0.1) !important;
+        animation: pulse 2s infinite !important;
+      }
+      
+      @keyframes pulse {
+        0% { 
+          box-shadow: 0 0 20px rgba(255, 255, 255, 0.3), 0 0 40px rgba(255, 255, 255, 0.2), 0 0 60px rgba(255, 255, 255, 0.1) !important; 
+        }
+        50% { 
+          box-shadow: 0 0 30px rgba(255, 255, 255, 0.4), 0 0 60px rgba(255, 255, 255, 0.3), 0 0 90px rgba(255, 255, 255, 0.2) !important; 
+        }
+        100% { 
+          box-shadow: 0 0 20px rgba(255, 255, 255, 0.3), 0 0 40px rgba(255, 255, 255, 0.2), 0 0 60px rgba(255, 255, 255, 0.1) !important; 
+        }
+      }
+      
+      .theme-light .card-value {
+        color: #111827 !important;
+      }
+      
+      .theme-dark .card-value {
+        color: #ffffff !important;
+      }
+      
+      .theme-light .card-value.online {
+        color: #059669 !important;
+      }
+      
+      .theme-dark .card-value.online {
+        color: #10b981 !important;
+      }
+      
+      .theme-light .card-value.offline {
+        color: #dc2626 !important;
+      }
+      
+      .theme-dark .card-value.offline {
+        color: #ef4444 !important;
+      }
+      
+      .theme-light .card-icon {
+        color: #374151 !important;
+      }
+      
+      .theme-dark .card-icon {
+        color: #ffffff !important;
+      }
+      
+      .theme-light .card-icon.online {
+        color: #059669 !important;
+      }
+      
+      .theme-dark .card-icon.online {
+        color: #10b981 !important;
+      }
+      
+      .theme-light .card-icon.offline {
+        color: #dc2626 !important;
+      }
+      
+      .theme-dark .card-icon.offline {
+        color: #ef4444 !important;
+      }
+      
+      /* Theme toggle button styles */
+      .theme-light .theme-toggle {
+        background-color: #f3f4f6 !important;
+        color: #374151 !important;
+      }
+      
+      .theme-dark .theme-toggle {
+        background-color: #1f2937 !important;
+        color: #d1d5db !important;
+      }
+      
+      .theme-light .theme-toggle:hover {
+        background-color: #e5e7eb !important;
+      }
+      
+      .theme-dark .theme-toggle:hover {
+        background-color: #374151 !important;
+      }
+      
+      /* Input field styles */
+      .theme-light .input-field {
+        background-color: #ffffff !important;
+        border-color: #d1d5db !important;
+        color: #111827 !important;
+      }
+      
+      .theme-dark .input-field {
+        background-color: #000000 !important;
+        border-color: #374151 !important;
+        color: #ffffff !important;
+      }
+      
+      /* Button styles */
+      .theme-light .tab-button {
+        background-color: #ffffff !important;
+        border-color: #d1d5db !important;
+        color: #374151 !important;
+      }
+      
+      .theme-dark .tab-button {
+        background-color: #1f2937 !important;
+        border-color: #374151 !important;
+        color: #d1d5db !important;
+      }
+      
+      /* Text styles */
+      .theme-light .text-secondary {
+        color: #6b7280 !important;
+      }
+      
+      .theme-dark .text-secondary {
+        color: #9ca3af !important;
+      }
+      
+      /* Download button */
+      .theme-light .download-btn {
+        background-color: #374151 !important;
+        color: #ffffff !important;
+      }
+      
+      .theme-dark .download-btn {
+        background-color: #1f2937 !important;
+        color: #ffffff !important;
+      }
+      
+      /* Varying info box */
+      .theme-light .varying-info {
+        background-color: #fef3c7 !important;
+        border-color: #f59e0b !important;
+        color: #92400e !important;
+      }
+      
+      .theme-dark .varying-info {
+        background-color: rgba(245, 158, 11, 0.1) !important;
+        border-color: #f59e0b !important;
+        color: #fbbf24 !important;
+      }
+      
+      /* Table styles */
+      .theme-light .table-container {
+        border-color: #d1d5db !important;
+      }
+      
+      .theme-dark .table-container {
+        border-color: #374151 !important;
+      }
+      
+      .theme-light .table-divider {
+        border-color: #e5e7eb !important;
+      }
+      
+      .theme-dark .table-divider {
+        border-color: #374151 !important;
+      }
+      
+      .theme-light .table-header {
+        background-color: #f9fafb !important;
+        color: #111827 !important;
+      }
+      
+      .theme-dark .table-header {
+        background-color: #1f2937 !important;
+        color: #ffffff !important;
+      }
+      
+      .theme-light .table-body {
+        background-color: #ffffff !important;
+        color: #111827 !important;
+      }
+      
+      .theme-dark .table-body {
+        background-color: #000000 !important;
+        color: #ffffff !important;
+      }
+      
+      /* Search result styles */
+      .theme-light .search-result {
+        border-color: #d1d5db !important;
+        background-color: #ffffff !important;
+        color: #111827 !important;
+      }
+      
+      .theme-dark .search-result {
+        border-color: #374151 !important;
+        background-color: #000000 !important;
+        color: #ffffff !important;
+      }
+      
+      /* Theme toggle icon colors */
+      .theme-light .theme-toggle svg {
+        color: #374151 !important;
+      }
+      
+      .theme-dark .theme-toggle svg {
+        color: #d1d5db !important;
+      }
+    </style>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script crossorigin src="https://unpkg.com/htm@3.1.1/dist/htm.umd.js"></script>
+  </head>
+  <body class="theme-light">
+    <div id="root" class="min-h-screen"></div>
+    <script>
+      const { useState, useEffect, useMemo } = React;
+      const html = htm.bind(React.createElement);
+      
+      const api = {
+        async stats() { return (await fetch('/api/stats')).json(); },
+        async dvrs(status) { return (await fetch('/api/dvrs?status=' + status)).json(); },
+        async search(site) {
+          const res = await fetch('/api/search?site=' + encodeURIComponent(site));
+          if (!res.ok) throw new Error('Not found');
+          return res.json();
+        },
+        async updateP2P(site, p2pNumber) {
+          const res = await fetch('/api/update-p2p', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ site, p2pNumber })
+          });
+          if (!res.ok) throw new Error('Update failed');
+          return res.json();
+        },
+        async refresh() { return (await fetch('/api/refresh', { method: 'POST' })).json(); },
+        csvUrl(status) { return '/api/download.csv?status=' + status; },
+      };
+
+      function StatCard({ label, value, variant, subtitle }) {
+        const icon = variant === 'online' ? html`<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>`
+        : variant === 'offline' ? html`<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>`
+        : html`<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path></svg>`;
+
+        return html`
+          <div class="relative flex-1 rounded-xl p-6 card shadow-lg">
+                         <div class="flex items-start justify-between">
+               <div class="text-sm font-medium">${label}</div>
+               <div class="opacity-90 card-icon ${variant}">${icon}</div>
+             </div>
+             <div class="text-4xl font-bold mt-3 card-value ${variant}">${value}</div>
+             <div class="text-sm mt-1">${subtitle}</div>
+          </div>
+        `;
+      }
+
+      function Landing({ onEnter }) {
+        const videoRef = React.useRef(null);
+        const [blocked, setBlocked] = React.useState(false);
+        const [loadError, setLoadError] = React.useState(false);
+        React.useEffect(() => {
+          if (videoRef.current) {
+            const p = videoRef.current.play();
+            if (p && typeof p.then === 'function') {
+              p.catch(() => setBlocked(true));
+            }
+          }
+          // Unmute on first user interaction (no visible button)
+          const unmuteOnUserGesture = () => {
+            if (videoRef.current) {
+              videoRef.current.muted = false;
+              if (videoRef.current.paused) {
+                videoRef.current.play().catch(() => {});
+              }
+            }
+          };
+          document.addEventListener('click', unmuteOnUserGesture, { once: true });
+          document.addEventListener('touchstart', unmuteOnUserGesture, { once: true });
+          document.addEventListener('keydown', unmuteOnUserGesture, { once: true });
+
+          // Hide any embedded text tracks/subtitles/metadata cues
+          const v = videoRef.current;
+          const disableTracks = () => {
+            try {
+              const tracks = v && v.textTracks ? v.textTracks : [];
+              for (let i = 0; i < (tracks.length || 0); i++) {
+                try { tracks[i].mode = 'disabled'; } catch (e) {}
+              }
+            } catch (e) {}
+          };
+          disableTracks();
+          v && v.addEventListener && v.addEventListener('loadedmetadata', disableTracks);
+          try { v && v.textTracks && v.textTracks.addEventListener && v.textTracks.addEventListener('addtrack', disableTracks); } catch (e) {}
+          return () => {
+            document.removeEventListener('click', unmuteOnUserGesture);
+            document.removeEventListener('touchstart', unmuteOnUserGesture);
+            document.removeEventListener('keydown', unmuteOnUserGesture);
+            v && v.removeEventListener && v.removeEventListener('loadedmetadata', disableTracks);
+            try { v && v.textTracks && v.textTracks.removeEventListener && v.textTracks.removeEventListener('addtrack', disableTracks); } catch (e) {}
+          };
+        }, []);
+        const onPlayClick = () => {
+          if (videoRef.current) {
+            videoRef.current.muted = false;
+            videoRef.current.play().then(() => { setBlocked(false); setLoadError(false); }).catch(() => setBlocked(true));
+          }
+        };
+        return html`
+          <div class="fixed inset-0 w-full h-full">
+            <video
+              ref=${videoRef}
+              class="absolute inset-0 w-full h-full object-cover"
+              autoplay
+              muted
+              playsinline
+              preload="auto"
+              onEnded=${onEnter}
+              onPlay=${() => { setBlocked(false); setLoadError(false); }}
+              onError=${() => { setBlocked(true); }}
+            >
+              <source src="/static/video/DVR.mp4" type="video/mp4" />
+            </video>
+            <div class="absolute inset-0 bg-black/20"></div>
+            <div class="absolute inset-0 flex flex-col items-center justify-center gap-3 px-4 text-center">
+              ${loadError && html`<div class="px-4 py-2 rounded bg-red-600/90 text-white">Couldn't load or play the video. Click Play to continue.</div>`}
+              ${blocked && html`<button class="px-6 py-3 rounded-full bg-white/90 hover:bg-white text-gray-900 font-semibold shadow" onClick=${onPlayClick}>Play</button>`}
+            </div>
+          </div>
+        `;
+      }
+
+      function Table({ items }) {
+        return html`
+          <div class="overflow-auto rounded-lg border table-container">
+            <table class="min-w-full divide-y table-divider">
+              <thead class="table-header">
+                <tr>
+                  <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">SITE</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">P2P NUMBER</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">STORE NAME</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y table-divider table-body">
+                ${items.map((r) => html`
+                  <tr>
+                    <td class="px-4 py-2 whitespace-nowrap font-medium">${r['SITE']}</td>
+                    <td class="px-4 py-2">${r['P2P NUMBER']}</td>
+                    <td class="px-4 py-2">${r['STORE NAME']}</td>
+                  </tr>
+                `)}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      function Dashboard() {
+        const [stats, setStats] = useState({ total: 0, online: 0, offline: 0, lastUpdated: null });
+        const [tab, setTab] = useState('online');
+        const [varyingSites, setVaryingSites] = useState([]);
+        const [items, setItems] = useState([]);
+        const [loading, setLoading] = useState(true);
+        const [searchSite, setSearchSite] = useState('');
+        const [searchResult, setSearchResult] = useState(null);
+        const [updateSite, setUpdateSite] = useState('');
+        const [updateP2P, setUpdateP2P] = useState('');
+        const [message, setMessage] = useState(null);
+        const [theme, setTheme] = useState(() => {
+          try { return localStorage.getItem('theme') || 'dark'; } catch (e) { return 'dark'; }
+        });
+        const isDark = useMemo(() => document.documentElement.classList.contains('dark'), [theme]);
+        const applyTheme = (mode) => {
+          try { localStorage.setItem('theme', mode); } catch (e) {}
+          
+          // Remove all existing theme classes
+          document.body.classList.remove('theme-light', 'theme-dark');
+          document.documentElement.classList.remove('dark');
+          
+          // Apply the selected theme
+          if (mode === 'dark') {
+            document.body.classList.add('theme-dark');
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.colorScheme = 'dark';
+          } else {
+            document.body.classList.add('theme-light');
+            document.documentElement.style.colorScheme = 'light';
+          }
+        };
+
+
+        const load = async (targetTab = tab) => {
+          setLoading(true);
+          try {
+            const s = await api.stats();
+            setStats(s);
+            const res = await api.dvrs(targetTab);
+            setItems(res.items || []);
+            
+            // Load varying sites (sites that have been both online and offline today)
+            if (targetTab === 'varying') {
+              const varyingRes = await api.dvrs('varying');
+              setVaryingSites(varyingRes.items || []);
+            }
+          } finally {
+            setLoading(false);
+          }
+        };
+
+        useEffect(() => { load('online'); }, []);
+        useEffect(() => { load(tab); }, [tab]);
+
+        useEffect(() => { applyTheme(theme); }, [theme]);
+
+        // Keep stat cards and list fresh without touching the live graph
+        useEffect(() => {
+          const id = setInterval(async () => {
+            try {
+              const s = await api.stats();
+              setStats(s);
+              const res = await api.dvrs(tab);
+              setItems(res.items || []);
+            } catch (e) {}
+          }, 15000); // 15s UI refresh; graph updates independently and smoothly
+          return () => clearInterval(id);
+        }, [tab]);
+
+        const onSearch = async (e) => {
+          e.preventDefault();
+          setSearchResult(null);
+          if (!searchSite.trim()) return;
+          try {
+            const res = await api.search(searchSite.trim());
+            setSearchResult(res);
+          } catch (e) {
+            setSearchResult({ notFound: true });
+          }
+        };
+
+        const onUpdate = async (e) => {
+          e.preventDefault();
+          if (!updateSite.trim()) return;
+          try {
+            await api.updateP2P(updateSite.trim(), updateP2P);
+            setMessage('P2P updated. Please refresh to rescan statuses.');
+            setTimeout(() => setMessage(null), 3000);
+          } catch (e) {
+            setMessage('Update failed. Ensure SITE exists.');
+            setTimeout(() => setMessage(null), 3000);
+          }
+        };
+
+        const onRefresh = async () => {
+          setLoading(true);
+          try {
+            const res = await api.refresh();
+            setStats(res);
+            const list = await api.dvrs(tab);
+            setItems(list.items || []);
+          } finally {
+            setLoading(false);
+          }
+        };
+
+        const lastUpdatedText = useMemo(() => {
+          if (!stats.lastUpdated) return 'Never';
+          const d = new Date(stats.lastUpdated * 1000);
+          return d.toLocaleString();
+        }, [stats.lastUpdated]);
+
+        return html`
+          <div class="max-w-7xl mx-auto p-6 space-y-6">
+            <header class="flex items-center justify-between">
+              <h1 class="text-2xl font-bold">DVR Status Dashboard</h1>
+                             <div class="flex items-center gap-2">
+                 <button 
+                   class="p-2 rounded-lg theme-toggle transition-colors"
+                   onClick=${() => {
+                     const newTheme = theme === 'light' ? 'dark' : 'light';
+                     setTheme(newTheme);
+                     applyTheme(newTheme);
+                   }}
+                   title=${theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+                 >
+                   ${theme === 'light' 
+                     ? html`<svg class="w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path></svg>`
+                     : html`<svg class="w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>`
+                   }
+                 </button>
+                 <button class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700" onClick=${onRefresh}>
+                   Refresh Scan
+                 </button>
+               </div>
+            </header>
+
+            <section class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              ${html`<${StatCard} label="Total DVRs" value=${stats.total} variant="total" subtitle="Across all sites" />`}
+              ${html`<${StatCard} label="Online DVRs" value=${stats.online} variant="online" subtitle="Currently active" />`}
+              ${html`<${StatCard} label="Offline DVRs" value=${stats.offline} variant="offline" subtitle="Need attention" />`}
+            </section>
+
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div class="space-y-3">
+                <h2 class="text-lg font-semibold">Search SITE status</h2>
+                <form class="flex gap-2" onSubmit=${onSearch}>
+                  <input class="flex-1 px-3 py-2 border rounded input-field" placeholder="Enter SITE number" value=${searchSite} onChange=${e => setSearchSite(e.target.value)} />
+                  
+                  <button class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">Search</button>
+                </form>
+                ${searchResult && !searchResult.notFound && html`
+                  <div class="rounded border p-3 search-result">
+                    <div><span class="font-medium">SITE:</span> ${searchResult.SITE}</div>
+                    <div><span class="font-medium">P2P NUMBER:</span> ${searchResult['P2P NUMBER']}</div>
+                    <div><span class="font-medium">STORE NAME:</span> ${searchResult['STORE NAME']}</div>
+                    <div><span class="font-medium">STATUS:</span> <span class="${searchResult.status==='online' ? 'text-emerald-600' : 'text-rose-600'} font-semibold">${searchResult.status.toUpperCase()}</span></div>
+                  </div>
+                `}
+                ${searchResult && searchResult.notFound && html`<div class="text-rose-600">SITE not found</div>`}
+              </div>
+
+              <div class="space-y-3">
+                <h2 class="text-lg font-semibold">Update P2P by SITE</h2>
+                <form class="grid grid-cols-1 sm:grid-cols-3 gap-2" onSubmit=${onUpdate}>
+                  <input class="px-3 py-2 border rounded input-field" placeholder="SITE" value=${updateSite} onChange=${e => setUpdateSite(e.target.value)} />
+                  <input class="px-3 py-2 border rounded input-field" placeholder="New P2P Number" value=${updateP2P} onChange=${e => setUpdateP2P(e.target.value)} />
+                  <button class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">Update</button>
+                </form>
+                ${message && html`<div class="text-sm text-blue-700">${message}</div>`}
+              </div>
+              
+            </section>
+
+            <section class="space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex gap-2">
+                  <button class=${`px-3 py-2 rounded border ${tab==='online' ? 'bg-emerald-600 text-white' : 'tab-button'}`} onClick=${() => setTab('online')}>Online</button>
+                  <button class=${`px-3 py-2 rounded border ${tab==='offline' ? 'bg-rose-600 text-white' : 'tab-button'}`} onClick=${() => setTab('offline')}>Offline All Day</button>
+                  <button class=${`px-3 py-2 rounded border ${tab==='varying' ? 'bg-yellow-600 text-white' : 'tab-button'}`} onClick=${() => setTab('varying')}>Varying</button>
+                  <button class=${`px-3 py-2 rounded border ${tab==='all' ? 'bg-slate-700 text-white' : 'tab-button'}`} onClick=${() => setTab('all')}>All</button>
+                </div>
+                <div class="text-sm text-secondary">Last updated: ${lastUpdatedText}</div>
+              </div>
+              <div class="flex justify-between items-center">
+                <div class="text-sm text-secondary">${loading ? 'Loading...' : `${items.length} result(s)`}</div>
+                <a class="px-3 py-2 rounded download-btn hover:opacity-80" href=${api.csvUrl(tab)}>Download CSV</a>
+              </div>
+              ${loading ? html`<div class="py-10 text-center">Scanning statuses...</div>` : 
+                tab === 'varying' ? 
+                  html`<div class="space-y-4">
+                    <div class="varying-info rounded-lg p-4">
+                      <h3 class="text-lg font-semibold mb-2">Varying Connection Sites</h3>
+                      <p class="text-sm">These sites have been connecting and disconnecting throughout the day, indicating potential network issues or intermittent connectivity problems.</p>
+                    </div>
+                    <${Table} items=${varyingSites} />
+                  </div>` : 
+                  html`<${Table} items=${items} />`
+              }
+            </section>
+          </div>
+        `;
+      }
+
+      function App() {
+        const [entered, setEntered] = React.useState(false);
+        const onEnter = () => setEntered(true);
+        return entered
+          ? html`<${Dashboard} />`
+          : html`<${Landing} onEnter=${onEnter} />`;
+      }
+
+      ReactDOM.createRoot(document.getElementById('root')).render(html`<${App} />`);
+    </script>
+  </body>
+  </html>
+
+
