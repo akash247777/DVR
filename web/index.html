@@ -15,14 +15,15 @@
       };
     </script>
     <script>
-      // Completely disable system preference detection
-      if (window.matchMedia) {
-        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        // Override the media query to always return false
-        Object.defineProperty(mediaQuery, 'matches', {
-          get: function() { return false; }
-        });
-      }
+      // Completely disable system preference detection (best-effort; ignore errors)
+      try {
+        if (window.matchMedia) {
+          const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+          try {
+            Object.defineProperty(mediaQuery, 'matches', { get: function() { return false; } });
+          } catch (e) {}
+        }
+      } catch (e) {}
     </script>
     <script>
       (function() {
@@ -30,17 +31,27 @@
           var saved = localStorage.getItem('theme') || 'dark';
           
           // Remove all existing theme classes
-          document.body.classList.remove('theme-light', 'theme-dark');
-          document.documentElement.classList.remove('dark');
+          if (document.body && document.body.classList) {
+            document.body.classList.remove('theme-light', 'theme-dark');
+          } else {
+            document.addEventListener('DOMContentLoaded', function(){
+              try { document.body.classList.remove('theme-light', 'theme-dark'); } catch (e) {}
+            }, { once: true });
+          }
+          try { document.documentElement.classList.remove('dark'); } catch (e) {}
           
           // Apply the saved theme
           if (saved === 'dark') {
-            document.body.classList.add('theme-dark');
-            document.documentElement.classList.add('dark');
-            document.documentElement.style.colorScheme = 'dark';
+            var applyDark = function(){ try { document.body.classList.add('theme-dark'); } catch (e) {} };
+            if (document.body) { applyDark(); }
+            else { document.addEventListener('DOMContentLoaded', applyDark, { once: true }); }
+            try { document.documentElement.classList.add('dark'); } catch (e) {}
+            try { document.documentElement.style.colorScheme = 'dark'; } catch (e) {}
           } else {
-            document.body.classList.add('theme-light');
-            document.documentElement.style.colorScheme = 'light';
+            var applyLight = function(){ try { document.body.classList.add('theme-light'); } catch (e) {} };
+            if (document.body) { applyLight(); }
+            else { document.addEventListener('DOMContentLoaded', applyLight, { once: true }); }
+            try { document.documentElement.style.colorScheme = 'light'; } catch (e) {}
           }
         } catch (e) {}
       })();
@@ -50,6 +61,20 @@
       /* Force override system preference detection */
       @media (prefers-color-scheme: dark) {
         /* This will be ignored due to our JavaScript override */
+      }
+      
+      /* Full screen layout */
+      body, html {
+        height: 100vh !important;
+        width: 100vw !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+      }
+      
+      #root {
+        height: 100vh !important;
+        width: 100vw !important;
       }
       
       /* Custom theme classes that don't depend on system preference */
@@ -202,17 +227,43 @@
         color: #ffffff !important;
       }
       
-      /* Varying info box */
-      .theme-light .varying-info {
-        background-color: #fef3c7 !important;
-        border-color: #f59e0b !important;
-        color: #92400e !important;
+      
+      
+      /* Responsive table and layout */
+      .table-container {
+        max-width: 100% !important;
+        overflow-x: auto !important;
       }
       
-      .theme-dark .varying-info {
-        background-color: rgba(245, 158, 11, 0.1) !important;
-        border-color: #f59e0b !important;
-        color: #fbbf24 !important;
+      @media (max-width: 640px) {
+        .space-y-4 > * + * {
+          margin-top: 1rem !important;
+        }
+        .space-y-6 > * + * {
+          margin-top: 1.5rem !important;
+        }
+      }
+      
+      /* Smooth scrolling and better mobile experience */
+      .overflow-y-auto {
+        scroll-behavior: smooth !important;
+        -webkit-overflow-scrolling: touch !important;
+      }
+      
+      /* Ensure buttons are touch-friendly on mobile */
+      button, a {
+        min-height: 44px !important;
+        min-width: 44px !important;
+      }
+      
+      /* Better spacing for mobile */
+      @media (max-width: 480px) {
+        .p-4 {
+          padding: 0.75rem !important;
+        }
+        .space-y-4 > * + * {
+          margin-top: 0.75rem !important;
+        }
       }
       
       /* Table styles */
@@ -275,12 +326,56 @@
       }
     </style>
     
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script crossorigin src="https://unpkg.com/htm@3.1.1/dist/htm.umd.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js'"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js'"></script>
+    <script crossorigin src="https://unpkg.com/htm@3.1.1/dist/htm.umd.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js'"></script>
+    <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.6.2/dist/dotlottie-wc.js" type="module"></script>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Crect width='128' height='128' rx='24' fill='%23000'/%3E%3Cpath d='M92 64a28 28 0 11-56 0 28 28 0 0156 0z' fill='%23fff'/%3E%3Cpath d='M80 64a16 16 0 11-32 0 16 16 0 0132 0z' fill='%2300c853'/%3E%3C/svg%3E" />
+    <script>
+      // Show runtime JS errors on screen so we don't get a blank page
+      (function(){
+        function show(msg){
+          var el = document.getElementById('boot-status');
+          if (!el) {
+            var root = document.getElementById('root') || document.body;
+            el = document.createElement('div');
+            el.id = 'boot-status';
+            el.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#fff;color:#111;z-index:9999;padding:16px;text-align:center;';
+            root && root.appendChild(el);
+          }
+          el.style.display = 'flex';
+          el.textContent = msg;
+        }
+        window.addEventListener('error', function(e){ show('Error: ' + (e && e.message ? e.message : 'Unknown error')); });
+        window.addEventListener('unhandledrejection', function(e){ show('Load failed: ' + (e && e.reason ? (e.reason.message || e.reason) : 'Unknown')); });
+      })();
+    </script>
+    <script>
+      // Fallback if CDN libraries fail to load
+      (function(){
+        function showFallback(){
+          var el = document.getElementById('boot-status');
+          if (!el) return;
+          fetch('/api/stats').then(function(r){ return r.json(); }).then(function(s){
+            el.innerHTML = 'UI failed to load. Server is reachable. Total DVRs: ' + (s && s.total != null ? s.total : 'N/A');
+          }).catch(function(){
+            el.innerHTML = 'UI failed to load and API is unreachable. Please check network/server.';
+          });
+        }
+        setTimeout(function(){
+          if (!window.React || !window.ReactDOM || !window.htm) {
+            showFallback();
+          }
+        }, 1500);
+      })();
+    </script>
   </head>
-  <body class="theme-light">
-    <div id="root" class="min-h-screen"></div>
+  <body class="theme-light h-screen overflow-hidden">
+    <div id="root" class="w-full h-full">
+      <div id="boot-status" style="display:flex;align-items:center;justify-content:center;height:100%;color:#6b7280;font-family:system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+        Loading app...
+      </div>
+    </div>
     <script>
       const { useState, useEffect, useMemo } = React;
       const html = htm.bind(React.createElement);
@@ -327,6 +422,11 @@
         const [blocked, setBlocked] = React.useState(false);
         const [loadError, setLoadError] = React.useState(false);
         React.useEffect(() => {
+          // Fallback: auto-continue to dashboard after 8 seconds
+          const fallbackId = setTimeout(() => {
+            try { onEnter && onEnter(); } catch (e) {}
+          }, 8000);
+
           if (videoRef.current) {
             const p = videoRef.current.play();
             if (p && typeof p.then === 'function') {
@@ -360,6 +460,7 @@
           v && v.addEventListener && v.addEventListener('loadedmetadata', disableTracks);
           try { v && v.textTracks && v.textTracks.addEventListener && v.textTracks.addEventListener('addtrack', disableTracks); } catch (e) {}
           return () => {
+            clearTimeout(fallbackId);
             document.removeEventListener('click', unmuteOnUserGesture);
             document.removeEventListener('touchstart', unmuteOnUserGesture);
             document.removeEventListener('keydown', unmuteOnUserGesture);
@@ -384,15 +485,16 @@
               preload="auto"
               onEnded=${onEnter}
               onPlay=${() => { setBlocked(false); setLoadError(false); }}
-              onError=${() => { setBlocked(true); }}
+              onError=${() => { setBlocked(true); setLoadError(true); setTimeout(() => { try { onEnter && onEnter(); } catch (e) {} }, 300); }}
             >
-              <source src="video/DVR.mp4" type="video/mp4" />
+              <source src="/static/video/DVR.mp4" type="video/mp4" />
             </video>
             <div class="absolute inset-0 bg-black/20"></div>
             <div class="absolute inset-0 flex flex-col items-center justify-center gap-3 px-4 text-center">
               ${loadError && html`<div class="px-4 py-2 rounded bg-red-600/90 text-white">Couldn't load or play the video. Click Play to continue.</div>`}
               ${blocked && html`<button class="px-6 py-3 rounded-full bg-white/90 hover:bg-white text-gray-900 font-semibold shadow" onClick=${onPlayClick}>Play</button>`}
             </div>
+            
           </div>
         `;
       }
@@ -422,10 +524,9 @@
         `;
       }
 
-      function Dashboard() {
+      function Dashboard({ skipIntro = false }) {
         const [stats, setStats] = useState({ total: 0, online: 0, offline: 0, lastUpdated: null });
         const [tab, setTab] = useState('online');
-        const [varyingSites, setVaryingSites] = useState([]);
         const [items, setItems] = useState([]);
         const [loading, setLoading] = useState(true);
         const [searchSite, setSearchSite] = useState('');
@@ -436,6 +537,8 @@
         const [theme, setTheme] = useState(() => {
           try { return localStorage.getItem('theme') || 'dark'; } catch (e) { return 'dark'; }
         });
+        const [showIntro, setShowIntro] = useState(false);
+        const introRef = React.useRef(null);
         const isDark = useMemo(() => document.documentElement.classList.contains('dark'), [theme]);
         const applyTheme = (mode) => {
           try { localStorage.setItem('theme', mode); } catch (e) {}
@@ -460,15 +563,13 @@
           setLoading(true);
           try {
             const s = await api.stats();
-            setStats(s);
+            setStats(s || { total: 0, online: 0, offline: 0, lastUpdated: null });
             const res = await api.dvrs(targetTab);
-            setItems(res.items || []);
+            setItems((res && res.items) ? res.items : []);
             
-            // Load varying sites (sites that have been both online and offline today)
-            if (targetTab === 'varying') {
-              const varyingRes = await api.dvrs('varying');
-              setVaryingSites(varyingRes.items || []);
-            }
+          } catch (e) {
+            try { console.error('Load failed', e); } catch (_) {}
+            setMessage('Failed to load data. Please check the server.');
           } finally {
             setLoading(false);
           }
@@ -478,6 +579,43 @@
         useEffect(() => { load(tab); }, [tab]);
 
         useEffect(() => { applyTheme(theme); }, [theme]);
+
+        // Completely disable intro video when coming from Landing
+        useEffect(() => { 
+          if (skipIntro) {
+            setShowIntro(false);
+          } else {
+            setShowIntro(true);
+          }
+        }, [skipIntro]);
+
+        useEffect(() => {
+          const v = introRef.current;
+
+          const unmuteOnUserGesture = () => {
+            if (!v) return;
+            try { v.muted = false; } catch (e) {}
+            try { v.volume = 1; } catch (e) {}
+            try { v.play().catch(() => {}); } catch (e) {}
+          };
+
+          if (showIntro && v) {
+            try { v.muted = true; } catch (e) {}
+            try { v.play().catch(() => {}); } catch (e) {}
+            document.addEventListener('click', unmuteOnUserGesture, { once: true });
+            document.addEventListener('touchstart', unmuteOnUserGesture, { once: true });
+            document.addEventListener('keydown', unmuteOnUserGesture, { once: true });
+          }
+          if (!showIntro && v) {
+            try { v.pause(); } catch (e) {}
+          }
+
+          return () => {
+            document.removeEventListener('click', unmuteOnUserGesture);
+            document.removeEventListener('touchstart', unmuteOnUserGesture);
+            document.removeEventListener('keydown', unmuteOnUserGesture);
+          };
+        }, [showIntro]);
 
         // Keep stat cards and list fresh without touching the live graph
         useEffect(() => {
@@ -536,37 +674,52 @@
         }, [stats.lastUpdated]);
 
         return html`
-          <div class="max-w-7xl mx-auto p-6 space-y-6">
-            <header class="flex items-center justify-between">
-              <h1 class="text-2xl font-bold">DVR Status Dashboard</h1>
-                             <div class="flex items-center gap-2">
-                 <button 
-                   class="p-2 rounded-lg theme-toggle transition-colors"
-                   onClick=${() => {
-                     const newTheme = theme === 'light' ? 'dark' : 'light';
-                     setTheme(newTheme);
-                     applyTheme(newTheme);
-                   }}
-                   title=${theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-                 >
-                   ${theme === 'light' 
-                     ? html`<svg class="w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path></svg>`
-                     : html`<svg class="w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>`
-                   }
-                 </button>
-                 <button class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700" onClick=${onRefresh}>
-                   Refresh Scan
-                 </button>
-               </div>
+          <div class="w-full h-full p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto">
+            <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <h1 class="text-xl sm:text-2xl font-bold">DVR Status Dashboard</h1>
+              <div class="flex items-center gap-2">
+                <button 
+                  class="p-2 rounded-lg theme-toggle transition-colors"
+                  onClick=${() => {
+                    const newTheme = theme === 'light' ? 'dark' : 'light';
+                    setTheme(newTheme);
+                    applyTheme(newTheme);
+                  }}
+                  title=${theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+                >
+                  ${theme === 'light' 
+                    ? html`<svg class="w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path></svg>`
+                    : html`<svg class="w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>`
+                  }
+                </button>
+                <button class="px-3 sm:px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 text-sm sm:text-base" onClick=${onRefresh}>
+                  Refresh Scan
+                </button>
+              </div>
             </header>
 
-            <section class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               ${html`<${StatCard} label="Total DVRs" value=${stats.total} variant="total" subtitle="Across all sites" />`}
               ${html`<${StatCard} label="Online DVRs" value=${stats.online} variant="online" subtitle="Currently active" />`}
               ${html`<${StatCard} label="Offline DVRs" value=${stats.offline} variant="offline" subtitle="Need attention" />`}
             </section>
 
-            <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            ${!skipIntro && showIntro && html`
+              <div class="fixed inset-0 z-50 w-full h-full">
+                <video
+                  ref=${introRef}
+                  class="absolute inset-0 w-full h-full object-cover"
+                  src="/static/video/DVR.mp4"
+                  autoplay
+                  muted
+                  playsinline
+                  preload="auto"
+                  onEnded=${() => setShowIntro(false)}
+                ></video>
+              </div>
+            `}
+
+            <section class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
               <div class="space-y-3">
                 <h2 class="text-lg font-semibold">Search SITE status</h2>
                 <form class="flex gap-2" onSubmit=${onSearch}>
@@ -598,28 +751,21 @@
             </section>
 
             <section class="space-y-3">
-              <div class="flex items-center justify-between">
-                <div class="flex gap-2">
-                  <button class=${`px-3 py-2 rounded border ${tab==='online' ? 'bg-emerald-600 text-white' : 'tab-button'}`} onClick=${() => setTab('online')}>Online</button>
-                  <button class=${`px-3 py-2 rounded border ${tab==='offline' ? 'bg-rose-600 text-white' : 'tab-button'}`} onClick=${() => setTab('offline')}>Offline All Day</button>
-                  <button class=${`px-3 py-2 rounded border ${tab==='varying' ? 'bg-yellow-600 text-white' : 'tab-button'}`} onClick=${() => setTab('varying')}>Varying</button>
-                  <button class=${`px-3 py-2 rounded border ${tab==='all' ? 'bg-slate-700 text-white' : 'tab-button'}`} onClick=${() => setTab('all')}>All</button>
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex flex-wrap gap-2">
+                  <button class=${`px-2 sm:px-3 py-2 rounded border text-sm ${tab==='online' ? 'bg-emerald-600 text-white' : 'tab-button'}`} onClick=${() => setTab('online')}>Online</button>
+                  <button class=${`px-2 sm:px-3 py-2 rounded border text-sm ${tab==='offline' ? 'bg-rose-600 text-white' : 'tab-button'}`} onClick=${() => setTab('offline')}>Offline</button>
+                  <button class=${`px-2 sm:px-3 py-2 rounded border text-sm ${tab==='all' ? 'bg-slate-700 text-white' : 'tab-button'}`} onClick=${() => setTab('all')}>All</button>
                 </div>
                 <div class="text-sm text-secondary">Last updated: ${lastUpdatedText}</div>
               </div>
-              <div class="flex justify-between items-center">
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div class="text-sm text-secondary">${loading ? 'Loading...' : `${items.length} result(s)`}</div>
-                <a class="px-3 py-2 rounded download-btn hover:opacity-80" href=${api.csvUrl(tab)}>Download CSV</a>
+                <a class="px-1 py-3 rounded download-btn hover:opacity-80 text-sm" href=${api.csvUrl(tab)}>Download CSV</a>
               </div>
-              ${loading ? html`<div class="py-10 text-center">Scanning statuses...</div>` : 
-                tab === 'varying' ? 
-                  html`<div class="space-y-4">
-                    <div class="varying-info rounded-lg p-4">
-                      <h3 class="text-lg font-semibold mb-2">Varying Connection Sites</h3>
-                      <p class="text-sm">These sites have been connecting and disconnecting throughout the day, indicating potential network issues or intermittent connectivity problems.</p>
-                    </div>
-                    <${Table} items=${varyingSites} />
-                  </div>` : 
+              ${loading ? html`<div class="py-16 flex items-center justify-center">
+                <dotlottie-wc src="https://lottie.host/22b5a787-9b89-4093-838f-65dc932ef8b5/ZHWGxZWKc1.lottie" style=${{ width: '300px', height: '300px' }} speed="1" autoplay loop></dotlottie-wc>
+              </div>` : 
                   html`<${Table} items=${items} />`
               }
             </section>
@@ -628,14 +774,44 @@
       }
 
       function App() {
-        const [entered, setEntered] = React.useState(false);
-        const onEnter = () => setEntered(true);
-        return entered
-          ? html`<${Dashboard} />`
-          : html`<${Landing} onEnter=${onEnter} />`;
+        const [showDashboard, setShowDashboard] = useState(false);
+        const [fromLanding, setFromLanding] = useState(false);
+        
+        // Check if the app is being loaded from Streamlit
+        const urlParams = new URLSearchParams(window.location.search);
+        const fromStreamlit = urlParams.get('streamlit') === 'true';
+        
+        // If coming from Streamlit, skip the Landing component and go straight to Dashboard
+        // but allow the intro video to play once
+        if (fromStreamlit) {
+          // Start with Landing, then go to Dashboard (same as normal)
+          return showDashboard
+            ? html`<${Dashboard} skipIntro=${true} />`
+            : html`<${Landing} onEnter=${() => { setShowDashboard(true); setFromLanding(true); }} />`;
+        }
+
+        
+        return showDashboard 
+          ? html`<${Dashboard} skipIntro=${fromLanding} />` 
+          : html`<${Landing} onEnter=${() => { setShowDashboard(true); setFromLanding(true); }} />`;
       }
 
-      ReactDOM.createRoot(document.getElementById('root')).render(html`<${App} />`);
+      (function(){
+        const rootEl = document.getElementById('root');
+        const bootEl = document.getElementById('boot-status');
+        try {
+          ReactDOM.createRoot(rootEl).render(html`<${App} />`);
+          if (bootEl) bootEl.style.display = 'none';
+        } catch (e) {
+          try {
+            if (bootEl) {
+              bootEl.style.display = 'flex';
+              bootEl.textContent = 'Failed to start app. Open console for details.';
+            }
+          } catch (_) {}
+          try { console.error('App bootstrap failed', e); } catch (_) {}
+        }
+      })();
     </script>
   </body>
   </html>
