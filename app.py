@@ -11,20 +11,8 @@ try:
 except Exception:  # pragma: no cover
     requests = None
 
-import socket
 
-def get_local_ip():
-    try:
-        # Connect to a remote address to determine local IP
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        local_ip = s.getsockname()[0]
-        s.close()
-        return local_ip
-    except Exception:
-        return "127.0.0.1"
-
-BACKEND_HOST = get_local_ip()
+BACKEND_HOST = "127.0.0.1"
 BACKEND_PORT = int(os.environ.get("DVR_BACKEND_PORT", "8000"))
 BACKEND_URL = f"http://{BACKEND_HOST}:{BACKEND_PORT}"
 PROJECT_ROOT = Path(__file__).parent.resolve()
