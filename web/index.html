@@ -487,7 +487,7 @@
               onPlay=${() => { setBlocked(false); setLoadError(false); }}
               onError=${() => { setBlocked(true); setLoadError(true); setTimeout(() => { try { onEnter && onEnter(); } catch (e) {} }, 300); }}
             >
-              <source src="/static/video/DVR.mp4" type="video/mp4" />
+              <source src="web/video/DVR.mp4" type="video/mp4" />
             </video>
             <div class="absolute inset-0 bg-black/20"></div>
             <div class="absolute inset-0 flex flex-col items-center justify-center gap-3 px-4 text-center">
@@ -709,7 +709,7 @@
                 <video
                   ref=${introRef}
                   class="absolute inset-0 w-full h-full object-cover"
-                  src="/static/video/DVR.mp4"
+                  src="web/video/DVR.mp4"
                   autoplay
                   muted
                   playsinline
