@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import subprocess
+import socket
 from pathlib import Path
 
 import streamlit as st
@@ -12,15 +13,27 @@ except Exception:  # pragma: no cover
     requests = None
 
 
-BACKEND_HOST = "127.0.0.1"
-BACKEND_PORT = int(os.environ.get("DVR_BACKEND_PORT", "8000"))
-BACKEND_URL = f"http://{BACKEND_HOST}:{BACKEND_PORT}"
+# Detect deployment (Streamlit Cloud, HuggingFace, etc.)
+DEPLOYED = bool(os.environ.get("STREAMLIT_RUNTIME") or os.environ.get("SPACE_ID"))
+
 PROJECT_ROOT = Path(__file__).parent.resolve()
 INDEX_HTML = PROJECT_ROOT / "web" / "index.html"
 
+# Local vs hosted configuration
+if DEPLOYED:
+    BACKEND_HOST = "0.0.0.0"
+    BACKEND_PORT = int(os.environ.get("DVR_BACKEND_PORT", "8000"))
+    BACKEND_URL = ""  # relative URLs (Streamlit iframe/static handles it)
+else:
+    BACKEND_HOST = "0.0.0.0"
+    BACKEND_PORT = int(os.environ.get("DVR_BACKEND_PORT", "8000"))
+    # Use LAN IP so phone on same Wi-Fi can connect
+    local_ip = socket.gethostbyname(socket.gethostname())
+    BACKEND_URL = f"http://{local_ip}:{BACKEND_PORT}"
+
 
 def is_backend_up(timeout_seconds: float = 0.5) -> bool:
-    if requests is None:
+    if not BACKEND_URL or requests is None:
         return False
     try:
         r = requests.get(f"{BACKEND_URL}/api/stats", timeout=timeout_seconds)
@@ -31,10 +44,14 @@ def is_backend_up(timeout_seconds: float = 0.5) -> bool:
 
 @st.cache_resource(show_spinner=False)
 def start_backend_once() -> subprocess.Popen | None:
+    if DEPLOYED:
+        # On Streamlit Cloud/HF, don’t spawn uvicorn separately
+        return None
+
     if is_backend_up():
         return None
 
-    # Spawn uvicorn as a child process so its event loop and background thread run independently
+    # Spawn uvicorn as a child process
     cmd = [
         sys.executable,
         "-m",
@@ -44,17 +61,18 @@ def start_backend_once() -> subprocess.Popen | None:
         BACKEND_HOST,
         "--port",
         str(BACKEND_PORT),
-        # Do not use --reload inside Streamlit to avoid file watcher conflicts
     ]
     proc = subprocess.Popen(
         cmd,
         cwd=str(PROJECT_ROOT),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
-        creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, "CREATE_NO_WINDOW") else 0,
+        creationflags=subprocess.CREATE_NO_WINDOW
+        if hasattr(subprocess, "CREATE_NO_WINDOW")
+        else 0,
     )
 
-    # Wait for the API to become responsive
+    # Wait for the API
     deadline = time.time() + 20
     while time.time() < deadline:
         if is_backend_up():
@@ -64,27 +82,22 @@ def start_backend_once() -> subprocess.Popen | None:
 
 
 def inject_base_href(html_text: str, base_url: str) -> str:
-    # Ensure all relative references (/api, /static, favicon, etc.) resolve to the backend
+    if not base_url:
+        return html_text
     lower = html_text.lower()
     head_idx = lower.find("<head>")
     if head_idx == -1:
-        # Fallback: prepend base to the very beginning (harmless)
         return f'<base href="{base_url}/">' + html_text
     insert_at = head_idx + len("<head>")
-    return html_text[:insert_at] + f"\n    <base href=\"{base_url}/\">\n" + html_text[insert_at:]
+    return html_text[:insert_at] + f'\n    <base href="{base_url}/">\n' + html_text[insert_at:]
 
 
 def render_frontend():
-    # Preferred: embed the running backend UI directly for 1:1 fidelity
-    if is_backend_up():
-        # Add a query parameter to signal that this is coming from Streamlit
-        # This will be used in index.html to prevent the video from playing twice
+    if not DEPLOYED and is_backend_up() and BACKEND_URL:
         streamlit_url = f"{BACKEND_URL}?streamlit=true"
         st.components.v1.iframe(streamlit_url, height=900)
-        # Removed the "Open in a new tab" link
         return
 
-    # Fallback: inline HTML with injected base to point at backend URL
     if INDEX_HTML.exists():
         html_text = INDEX_HTML.read_text(encoding="utf-8")
         html_text = inject_base_href(html_text, BACKEND_URL)
