@@ -23,12 +23,18 @@ INDEX_HTML = PROJECT_ROOT / "web" / "index.html"
 if DEPLOYED:
     BACKEND_HOST = "0.0.0.0"
     BACKEND_PORT = int(os.environ.get("DVR_BACKEND_PORT", "8000"))
-    BACKEND_URL = ""  # relative URLs (Streamlit iframe/static handles it)
+    BACKEND_URL = ""  # use relative paths inside container
 else:
     BACKEND_HOST = "0.0.0.0"
     BACKEND_PORT = int(os.environ.get("DVR_BACKEND_PORT", "8000"))
-    # Use LAN IP so phone on same Wi-Fi can connect
-    local_ip = socket.gethostbyname(socket.gethostname())
+    # Detect LAN IP so mobile devices on same Wi-Fi can connect
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        local_ip = s.getsockname()[0]
+        s.close()
+    except Exception:
+        local_ip = "127.0.0.1"
     BACKEND_URL = f"http://{local_ip}:{BACKEND_PORT}"
 
 
@@ -45,7 +51,7 @@ def is_backend_up(timeout_seconds: float = 0.5) -> bool:
 @st.cache_resource(show_spinner=False)
 def start_backend_once() -> subprocess.Popen | None:
     if DEPLOYED:
-        # On Streamlit Cloud/HF, don’t spawn uvicorn separately
+        # On Streamlit Cloud/HuggingFace, don’t spawn uvicorn separately
         return None
 
     if is_backend_up():
@@ -72,7 +78,7 @@ def start_backend_once() -> subprocess.Popen | None:
         else 0,
     )
 
-    # Wait for the API
+    # Wait for the API to start
     deadline = time.time() + 20
     while time.time() < deadline:
         if is_backend_up():
