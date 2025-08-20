@@ -12,7 +12,7 @@ except Exception:  # pragma: no cover
     requests = None
 
 
-BACKEND_HOST = "127.0.0.1"
+BACKEND_HOST = "0.0.0.0"
 BACKEND_PORT = int(os.environ.get("DVR_BACKEND_PORT", "8000"))
 BACKEND_URL = f"http://{BACKEND_HOST}:{BACKEND_PORT}"
 PROJECT_ROOT = Path(__file__).parent.resolve()
@@ -102,3 +102,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
