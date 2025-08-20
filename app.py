@@ -45,40 +45,52 @@ def is_backend_up(timeout_seconds: float = 0.5) -> bool:
 @st.cache_resource(show_spinner=False)
 def start_backend_once() -> subprocess.Popen | None:
     if DEPLOYED:
-        # On Streamlit Cloud/HF, don’t spawn uvicorn separately
-        return None
+        # Start FastAPI server directly in a background thread
+        import threading
+        import uvicorn
+        from server import app  # Assuming your FastAPI app is in server.py as `app`
 
-    if is_backend_up():
-        return None
+        def run_uvicorn():
+            uvicorn.run(
+                app,
+                host=BACKEND_HOST,
+                port=BACKEND_PORT,
+                log_level="info"
+            )
 
-    # Spawn uvicorn as a child process
-    cmd = [
-        sys.executable,
-        "-m",
-        "uvicorn",
-        "server:app",
-        "--host",
-        BACKEND_HOST,
-        "--port",
-        str(BACKEND_PORT),
-    ]
-    proc = subprocess.Popen(
-        cmd,
-        cwd=str(PROJECT_ROOT),
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        creationflags=subprocess.CREATE_NO_WINDOW
-        if hasattr(subprocess, "CREATE_NO_WINDOW")
-        else 0,
-    )
-
-    # Wait for the API
-    deadline = time.time() + 20
-    while time.time() < deadline:
+        thread = threading.Thread(target=run_uvicorn, daemon=True)
+        thread.start()
+        time.sleep(2)  # Give it a moment to start
+        return None  # No subprocess
+    else:
+        # Existing local subprocess logic
         if is_backend_up():
-            break
-        time.sleep(0.3)
-    return proc
+            return None
+        cmd = [
+            sys.executable,
+            "-m",
+            "uvicorn",
+            "server:app",
+            "--host",
+            BACKEND_HOST,
+            "--port",
+            str(BACKEND_PORT),
+        ]
+        proc = subprocess.Popen(
+            cmd,
+            cwd=str(PROJECT_ROOT),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=subprocess.CREATE_NO_WINDOW
+            if hasattr(subprocess, "CREATE_NO_WINDOW")
+            else 0,
+        )
+        deadline = time.time() + 20
+        while time.time() < deadline:
+            if is_backend_up():
+                break
+            time.sleep(0.3)
+        return proc
 
 
 def inject_base_href(html_text: str, base_url: str) -> str:
