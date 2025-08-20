@@ -773,28 +773,21 @@
         `;
       }
 
-      function App() {
-        const [showDashboard, setShowDashboard] = useState(false);
-        const [fromLanding, setFromLanding] = useState(false);
-        
-        // Check if the app is being loaded from Streamlit
-        const urlParams = new URLSearchParams(window.location.search);
-        const fromStreamlit = urlParams.get('streamlit') === 'true';
-        
-        // If coming from Streamlit, skip the Landing component and go straight to Dashboard
-        // but allow the intro video to play once
-        if (fromStreamlit) {
-          // Start with Landing, then go to Dashboard (same as normal)
-          return showDashboard
-            ? html`<${Dashboard} skipIntro=${true} />`
+     function App() {
+      const [showDashboard, setShowDashboard] = useState(false);
+      const [fromLanding, setFromLanding] = useState(false);
+      
+      // Always start with Landing → then Dashboard
+      return showDashboard
+      ? html`<${Dashboard} skipIntro=${true} />`
+      : html`<${Landing} onEnter=${() => { setShowDashboard(true); setFromLanding(true); }} />`;
+      }
+      
+          
+          return showDashboard 
+            ? html`<${Dashboard} skipIntro=${fromLanding} />` 
             : html`<${Landing} onEnter=${() => { setShowDashboard(true); setFromLanding(true); }} />`;
         }
-
-        
-        return showDashboard 
-          ? html`<${Dashboard} skipIntro=${fromLanding} />` 
-          : html`<${Landing} onEnter=${() => { setShowDashboard(true); setFromLanding(true); }} />`;
-      }
 
       (function(){
         const rootEl = document.getElementById('root');
