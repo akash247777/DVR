@@ -3,7 +3,6 @@ import sys
 import time
 import subprocess
 from pathlib import Path
-import socket
 
 import streamlit as st
 
@@ -12,20 +11,8 @@ try:
 except Exception:  # pragma: no cover
     requests = None
 
-def get_local_ip():
-    """Automatically detect the local IP address for network access"""
-    try:
-        # Create a socket to determine local IP
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        local_ip = s.getsockname()[0]
-        s.close()
-        return local_ip
-    except Exception:
-        return "127.0.0.1"
 
-# Use environment variable or auto-detect local IP
-BACKEND_HOST = os.environ.get("DVR_BACKEND_HOST", get_local_ip())
+BACKEND_HOST = "127.0.0.1"
 BACKEND_PORT = int(os.environ.get("DVR_BACKEND_PORT", "8000"))
 BACKEND_URL = f"http://{BACKEND_HOST}:{BACKEND_PORT}"
 PROJECT_ROOT = Path(__file__).parent.resolve()
@@ -115,5 +102,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
