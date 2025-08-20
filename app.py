@@ -34,7 +34,7 @@ else:
         local_ip = s.getsockname()[0]
         s.close()
     except Exception:
-        local_ip = "192.168.100.18"
+        local_ip = "192.168.137.1"
     BACKEND_URL = f"http://{local_ip}:{BACKEND_PORT}"
 
 
