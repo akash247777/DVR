@@ -1,13 +1,10 @@
 ## DVR Status Dashboard
 
 Real-time monitoring of Dahua DVRs via Easy4IPCloud, with a FastAPI backend and a static web UI. The app reads an Excel workbook of devices, periodically checks their online status through Dahua's cloud, exposes a REST API, and serves a simple dashboard.
-# DEMO
 
-
+# DEMO 📽 🎥
 
 https://github.com/user-attachments/assets/33844588-0b2a-4f7d-a16d-3e30349b30e3
-
-
 
 ### Key features
 - **Excel-driven inventory**: Loads devices from `P2P1.xlsx` with columns `P2P NUMBER`, `SITE`, `STORE NAME`.
@@ -165,8 +162,3 @@ curl -OJ "http://localhost:8000/api/download.csv?status=offline"
 
 - Linting/formatting/testing are not included by default; add your preferred tooling.
 - The UI in `web/` is served at `/` when present, and static assets are available at `/static`.
-
-## License
-
-Specify your license here.
-
