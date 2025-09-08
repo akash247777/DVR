@@ -92,6 +92,7 @@
         background-color: #f3f4f6 !important;
         border-color: #d1d5db !important;
         color: #374151 !important;
+        transition: transform 0.3s ease, box-shadow 0.3s ease !important;
       }
       
       .theme-dark .card {
@@ -100,6 +101,20 @@
         color: #d1d5db !important;
         box-shadow: 0 0 20px rgba(255, 255, 255, 0.3), 0 0 40px rgba(255, 255, 255, 0.2), 0 0 60px rgba(255, 255, 255, 0.1) !important;
         animation: pulse 2s infinite !important;
+        transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+      }
+      
+      .card:hover {
+        transform: scale(1.05) !important;
+        cursor: pointer !important;
+      }
+      
+      .theme-light .card:hover {
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 5px 10px rgba(0, 0, 0, 0.1) !important;
+      }
+      
+      .theme-dark .card:hover {
+        box-shadow: 0 0 30px rgba(255, 255, 255, 0.5), 0 0 60px rgba(255, 255, 255, 0.3), 0 0 90px rgba(255, 255, 255, 0.2) !important;
       }
       
       @keyframes pulse {
@@ -487,7 +502,7 @@
               onPlay=${() => { setBlocked(false); setLoadError(false); }}
               onError=${() => { setBlocked(true); setLoadError(true); setTimeout(() => { try { onEnter && onEnter(); } catch (e) {} }, 300); }}
             >
-              <source src="web/video/DVR.mp4" type="video/mp4" />
+              <source src="/static/video/DVR.mp4" type="video/mp4" />
             </video>
             <div class="absolute inset-0 bg-black/20"></div>
             <div class="absolute inset-0 flex flex-col items-center justify-center gap-3 px-4 text-center">
@@ -524,7 +539,7 @@
         `;
       }
 
-      function Dashboard({ skipIntro = false }) {
+      function Dashboard() {
         const [stats, setStats] = useState({ total: 0, online: 0, offline: 0, lastUpdated: null });
         const [tab, setTab] = useState('online');
         const [items, setItems] = useState([]);
@@ -580,14 +595,8 @@
 
         useEffect(() => { applyTheme(theme); }, [theme]);
 
-        // Completely disable intro video when coming from Landing
-        useEffect(() => { 
-          if (skipIntro) {
-            setShowIntro(false);
-          } else {
-            setShowIntro(true);
-          }
-        }, [skipIntro]);
+        // Auto-open intro video on first load
+        useEffect(() => { setShowIntro(true); }, []);
 
         useEffect(() => {
           const v = introRef.current;
@@ -704,12 +713,12 @@
               ${html`<${StatCard} label="Offline DVRs" value=${stats.offline} variant="offline" subtitle="Need attention" />`}
             </section>
 
-            ${!skipIntro && showIntro && html`
+            ${showIntro && html`
               <div class="fixed inset-0 z-50 w-full h-full">
                 <video
                   ref=${introRef}
                   class="absolute inset-0 w-full h-full object-cover"
-                  src="web/video/DVR.mp4"
+                  src="/static/video/DVR.mp4"
                   autoplay
                   muted
                   playsinline
@@ -773,21 +782,9 @@
         `;
       }
 
-     function App() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const fromStreamlit = urlParams.get('streamlit') === 'true';
-      
-      if (fromStreamlit) {
-        return showDashboard
-          ? html`<${Dashboard} skipIntro=${true} />`
-          : html`<${Landing} onEnter=${() => { setShowDashboard(true); setFromLanding(true); }} />`;
+      function App() {
+        return html`<${Dashboard} />`;
       }
-      
-          
-          return showDashboard 
-            ? html`<${Dashboard} skipIntro=${fromLanding} />` 
-            : html`<${Landing} onEnter=${() => { setShowDashboard(true); setFromLanding(true); }} />`;
-        }
 
       (function(){
         const rootEl = document.getElementById('root');
@@ -808,5 +805,3 @@
     </script>
   </body>
   </html>
-
-
