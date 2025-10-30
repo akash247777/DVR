@@ -213,4 +213,6 @@ if __name__ == "__main__":
 
     raise SystemExit(check_online(args.serial))
 
+
 # venv\Scripts\python.exe -m uvicorn server:app --host 0.0.0.0 --port 8000 --reload
+# http://127.0.0.1:8000/
