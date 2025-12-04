@@ -1,0 +1,7 @@
+cryptography
+xmltodict
+pandas
+openpyxl
+fastapi
+uvicorn
+aiofiles
