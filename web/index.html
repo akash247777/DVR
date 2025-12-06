@@ -433,83 +433,18 @@
       }
 
       function Landing({ onEnter }) {
-        const videoRef = React.useRef(null);
-        const [blocked, setBlocked] = React.useState(false);
-        const [loadError, setLoadError] = React.useState(false);
-        React.useEffect(() => {
-          // Fallback: auto-continue to dashboard after 8 seconds
-          const fallbackId = setTimeout(() => {
-            try { onEnter && onEnter(); } catch (e) {}
-          }, 8000);
-
-          if (videoRef.current) {
-            const p = videoRef.current.play();
-            if (p && typeof p.then === 'function') {
-              p.catch(() => setBlocked(true));
-            }
-          }
-          // Unmute on first user interaction (no visible button)
-          const unmuteOnUserGesture = () => {
-            if (videoRef.current) {
-              videoRef.current.muted = false;
-              if (videoRef.current.paused) {
-                videoRef.current.play().catch(() => {});
-              }
-            }
-          };
-          document.addEventListener('click', unmuteOnUserGesture, { once: true });
-          document.addEventListener('touchstart', unmuteOnUserGesture, { once: true });
-          document.addEventListener('keydown', unmuteOnUserGesture, { once: true });
-
-          // Hide any embedded text tracks/subtitles/metadata cues
-          const v = videoRef.current;
-          const disableTracks = () => {
-            try {
-              const tracks = v && v.textTracks ? v.textTracks : [];
-              for (let i = 0; i < (tracks.length || 0); i++) {
-                try { tracks[i].mode = 'disabled'; } catch (e) {}
-              }
-            } catch (e) {}
-          };
-          disableTracks();
-          v && v.addEventListener && v.addEventListener('loadedmetadata', disableTracks);
-          try { v && v.textTracks && v.textTracks.addEventListener && v.textTracks.addEventListener('addtrack', disableTracks); } catch (e) {}
-          return () => {
-            clearTimeout(fallbackId);
-            document.removeEventListener('click', unmuteOnUserGesture);
-            document.removeEventListener('touchstart', unmuteOnUserGesture);
-            document.removeEventListener('keydown', unmuteOnUserGesture);
-            v && v.removeEventListener && v.removeEventListener('loadedmetadata', disableTracks);
-            try { v && v.textTracks && v.textTracks.removeEventListener && v.textTracks.removeEventListener('addtrack', disableTracks); } catch (e) {}
-          };
-        }, []);
-        const onPlayClick = () => {
-          if (videoRef.current) {
-            videoRef.current.muted = false;
-            videoRef.current.play().then(() => { setBlocked(false); setLoadError(false); }).catch(() => setBlocked(true));
-          }
-        };
         return html`
-          <div class="fixed inset-0 w-full h-full">
-            <video
-              ref=${videoRef}
-              class="absolute inset-0 w-full h-full object-cover"
-              autoplay
-              muted
-              playsinline
-              preload="auto"
-              onEnded=${onEnter}
-              onPlay=${() => { setBlocked(false); setLoadError(false); }}
-              onError=${() => { setBlocked(true); setLoadError(true); setTimeout(() => { try { onEnter && onEnter(); } catch (e) {} }, 300); }}
-            >
-              <source src="/static/video/DVR.mp4" type="video/mp4" />
-            </video>
-            <div class="absolute inset-0 bg-black/20"></div>
-            <div class="absolute inset-0 flex flex-col items-center justify-center gap-3 px-4 text-center">
-              ${loadError && html`<div class="px-4 py-2 rounded bg-red-600/90 text-white">Couldn't load or play the video. Click Play to continue.</div>`}
-              ${blocked && html`<button class="px-6 py-3 rounded-full bg-white/90 hover:bg-white text-gray-900 font-semibold shadow" onClick=${onPlayClick}>Play</button>`}
+          <div class="fixed inset-0 w-full h-full flex items-center justify-center bg-black">
+            <div class="text-white text-center p-8">
+              <h1 class="text-3xl font-bold mb-4">DVR Status Dashboard</h1>
+              <p class="text-xl mb-8">Loading dashboard...</p>
+              <button 
+                class="px-6 py-3 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                onClick=${onEnter}
+              >
+                Enter Dashboard
+              </button>
             </div>
-            
           </div>
         `;
       }
@@ -552,8 +487,6 @@
         const [theme, setTheme] = useState(() => {
           try { return localStorage.getItem('theme') || 'dark'; } catch (e) { return 'dark'; }
         });
-        const [showIntro, setShowIntro] = useState(false);
-        const introRef = React.useRef(null);
         const isDark = useMemo(() => document.documentElement.classList.contains('dark'), [theme]);
         const applyTheme = (mode) => {
           try { localStorage.setItem('theme', mode); } catch (e) {}
@@ -594,37 +527,6 @@
         useEffect(() => { load(tab); }, [tab]);
 
         useEffect(() => { applyTheme(theme); }, [theme]);
-
-        // Auto-open intro video on first load
-        useEffect(() => { setShowIntro(true); }, []);
-
-        useEffect(() => {
-          const v = introRef.current;
-
-          const unmuteOnUserGesture = () => {
-            if (!v) return;
-            try { v.muted = false; } catch (e) {}
-            try { v.volume = 1; } catch (e) {}
-            try { v.play().catch(() => {}); } catch (e) {}
-          };
-
-          if (showIntro && v) {
-            try { v.muted = true; } catch (e) {}
-            try { v.play().catch(() => {}); } catch (e) {}
-            document.addEventListener('click', unmuteOnUserGesture, { once: true });
-            document.addEventListener('touchstart', unmuteOnUserGesture, { once: true });
-            document.addEventListener('keydown', unmuteOnUserGesture, { once: true });
-          }
-          if (!showIntro && v) {
-            try { v.pause(); } catch (e) {}
-          }
-
-          return () => {
-            document.removeEventListener('click', unmuteOnUserGesture);
-            document.removeEventListener('touchstart', unmuteOnUserGesture);
-            document.removeEventListener('keydown', unmuteOnUserGesture);
-          };
-        }, [showIntro]);
 
         // Keep stat cards and list fresh without touching the live graph
         useEffect(() => {
@@ -713,21 +615,6 @@
               ${html`<${StatCard} label="Offline DVRs" value=${stats.offline} variant="offline" subtitle="Need attention" />`}
             </section>
 
-            ${showIntro && html`
-              <div class="fixed inset-0 z-50 w-full h-full">
-                <video
-                  ref=${introRef}
-                  class="absolute inset-0 w-full h-full object-cover"
-                  src="/static/video/DVR.mp4"
-                  autoplay
-                  muted
-                  playsinline
-                  preload="auto"
-                  onEnded=${() => setShowIntro(false)}
-                ></video>
-              </div>
-            `}
-
             <section class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
               <div class="space-y-3">
                 <h2 class="text-lg font-semibold">Search SITE status</h2>
@@ -783,6 +670,12 @@
       }
 
       function App() {
+        const [showDashboard, setShowDashboard] = useState(false);
+        
+        if (!showDashboard) {
+          return html`<${Landing} onEnter=${() => setShowDashboard(true)} />`;
+        }
+        
         return html`<${Dashboard} />`;
       }
 
