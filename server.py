@@ -15,7 +15,7 @@ from check_online import is_online, _normalize_serial
 
 BASE_DIR = Path(__file__).parent
 EXCEL_PATH = BASE_DIR / "P2P1.xlsx"
-
+WEB_DIR = BASE_DIR / "web"
 
 
 class DataStore:
