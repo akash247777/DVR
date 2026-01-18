@@ -6,6 +6,11 @@ Real-time monitoring of Dahua DVRs via Easy4IPCloud, with a FastAPI backend and 
 
 https://github.com/user-attachments/assets/33844588-0b2a-4f7d-a16d-3e30349b30e3
 
+# Flow Diagram
+
+<img width="908" height="1227" alt="diagram-export-18-1-2026-8_02_57-pm" src="https://github.com/user-attachments/assets/82ec4145-9487-495c-910f-e4a333ee27eb" />
+
+
 ### Key features
 - **Excel-driven inventory**: Loads devices from `P2P1.xlsx` with columns `P2P NUMBER`, `SITE`, `STORE NAME`.
 - **Background status scanner**: Periodically probes devices via Easy4IPCloud and caches results in-memory.
